@@ -87,6 +87,10 @@ const DocumentUploader = ({ onUploadComplete }: DocumentUploaderProps) => {
     }
 
     setSelectedFile(file);
+    toast({
+      title: "File selected",
+      description: `${file.name} selected and ready for upload`,
+    });
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,7 +166,7 @@ const DocumentUploader = ({ onUploadComplete }: DocumentUploaderProps) => {
       <CardContent className="space-y-4">
         <div
           className={`file-drop-area border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 ${
-            isDragging ? "active" : ""
+            isDragging ? "bg-muted/50 border-primary" : "border-gray-300"
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -182,9 +186,9 @@ const DocumentUploader = ({ onUploadComplete }: DocumentUploaderProps) => {
           ) : (
             <div className="flex flex-col items-center">
               <FileType2 className="h-12 w-12 text-muted-foreground mb-2" />
-              <p className="font-medium">Drag and drop your file here</p>
+              <p className="font-medium">Clique para selecionar um arquivo</p>
               <p className="text-sm text-muted-foreground">
-                or click to browse (PDF, DOC, DOCX, JPG, PNG)
+                ou arraste e solte aqui (PDF, DOC, DOCX, JPG, PNG)
               </p>
             </div>
           )}
@@ -200,12 +204,12 @@ const DocumentUploader = ({ onUploadComplete }: DocumentUploaderProps) => {
         {selectedFile && (
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label htmlFor="document-type">Document Type</Label>
+              <Label htmlFor="document-type">Tipo de Documento</Label>
               <Select value={documentType} onValueChange={setDocumentType}>
                 <SelectTrigger id="document-type">
-                  <SelectValue placeholder="Select document type" />
+                  <SelectValue placeholder="Selecione o tipo de documento" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {documentTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
@@ -216,20 +220,20 @@ const DocumentUploader = ({ onUploadComplete }: DocumentUploaderProps) => {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="client-name">Client Name</Label>
+              <Label htmlFor="client-name">Nome do Cliente</Label>
               <Input
                 id="client-name"
-                placeholder="Enter client name"
+                placeholder="Digite o nome do cliente"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
               />
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="tags">Tags (comma separated)</Label>
+              <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
               <Input
                 id="tags"
-                placeholder="e.g. urgent, review, important"
+                placeholder="ex: urgente, revisão, importante"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
               />
@@ -240,7 +244,7 @@ const DocumentUploader = ({ onUploadComplete }: DocumentUploaderProps) => {
               disabled={isUploading}
               className="w-full bg-legal-primary hover:bg-legal-secondary"
             >
-              {isUploading ? "Uploading..." : "Upload Document"}
+              {isUploading ? "Enviando..." : "Enviar Documento"}
             </Button>
           </div>
         )}
