@@ -13,7 +13,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [documentTypeFilter, setDocumentTypeFilter] = useState("");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const { toast } = useToast();
 
   // Check if user is authenticated
@@ -67,7 +67,7 @@ const Dashboard = () => {
   };
 
   // Filter documents by type if filter is selected
-  const filteredDocuments = documentTypeFilter
+  const filteredDocuments = documentTypeFilter !== "all"
     ? documents.filter((doc) => doc.type === documentTypeFilter)
     : documents;
 
@@ -133,7 +133,7 @@ const Dashboard = () => {
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All document types</SelectItem>
+                  <SelectItem value="all">All document types</SelectItem>
                   <SelectItem value="petition">Petitions</SelectItem>
                   <SelectItem value="contract">Contracts</SelectItem>
                   <SelectItem value="decision">Court Decisions</SelectItem>
