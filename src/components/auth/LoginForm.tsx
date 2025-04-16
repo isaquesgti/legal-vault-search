@@ -12,10 +12,20 @@ const mockAuthenticate = (email: string, password: string): Promise<boolean> => 
   return new Promise((resolve) => {
     // Simulating API call
     setTimeout(() => {
+      // Check for admin credentials first
+      if (email === "admin" && password === "admin") {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("isAdmin", "true");
+        resolve(true);
+        return;
+      }
+      
       // For demo purposes, accept any combination except empty fields
       if (email.trim() && password.trim()) {
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userEmail", email);
+        localStorage.setItem("isAdmin", "false");
         resolve(true);
       } else {
         resolve(false);
@@ -43,7 +53,13 @@ const LoginForm = () => {
           title: "Login successful",
           description: "Welcome to Legal Vault Search",
         });
-        navigate("/dashboard");
+        
+        // Redirect based on user role
+        if (email === "admin" && password === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         toast({
           title: "Login failed",
@@ -76,8 +92,8 @@ const LoginForm = () => {
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              type="email"
-              placeholder="Enter your email"
+              type="text"
+              placeholder="Enter your email or username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

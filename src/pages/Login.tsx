@@ -9,7 +9,7 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-legal-primary">Legal Vault</h1>
           <p className="mt-2 text-gray-600">Your secure document repository</p>
           <p className="mt-1 text-sm text-gray-500">
-            Admin login: usuario <strong>admin</strong> | senha <strong>admin</strong>
+            Admin login: username <strong>admin</strong> | password <strong>admin</strong>
           </p>
         </div>
         <LoginForm />
