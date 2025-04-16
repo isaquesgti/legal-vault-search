@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,12 @@ const mockRegister = (email: string, password: string): Promise<boolean> => {
       if (email.trim() && password.trim()) {
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userEmail", email);
+        
+        // Check if user is admin
+        if (email === "admin" && password === "admin") {
+          localStorage.setItem("isAdmin", "true");
+        }
+        
         resolve(true);
       } else {
         resolve(false);
@@ -31,6 +37,22 @@ const SignupForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check for admin user on component mount
+  useEffect(() => {
+    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
+    
+    // If admin user doesn't exist, create it
+    if (!existingUsers.some((user: {email: string}) => user.email === "admin")) {
+      const adminUser = {
+        email: "admin",
+        password: "admin",
+        isAdmin: true
+      };
+      
+      localStorage.setItem("users", JSON.stringify([...existingUsers, adminUser]));
+    }
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +76,17 @@ const SignupForm = () => {
           title: "Registration successful",
           description: "Welcome to Legal Vault Search",
         });
-        navigate("/dashboard");
+        
+        // Store user in users array
+        const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        const newUser = { email, password, isAdmin: email === "admin" && password === "admin" };
+        localStorage.setItem("users", JSON.stringify([...existingUsers, newUser]));
+        
+        if (email === "admin" && password === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         toast({
           title: "Registration failed",
