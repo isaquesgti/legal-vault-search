@@ -6,6 +6,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
+const mockAuthenticate = (email: string, password: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      if ((email === "admin" && password === "admin") || (email.trim() && password.trim())) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", email);
+        
+        if (email === "admin" && password === "admin") {
+          localStorage.setItem("isAdmin", "true");
+        }
+        
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    }, 1000);
+  });
+};
+
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
