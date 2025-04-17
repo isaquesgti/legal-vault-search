@@ -1,38 +1,10 @@
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-
-// This is a mock authentication function. In a real app, this would connect to your backend
-const mockAuthenticate = (email: string, password: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    // Simulating API call
-    setTimeout(() => {
-      // Check for admin credentials first
-      if (email === "admin" && password === "admin") {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("isAdmin", "true");
-        resolve(true);
-        return;
-      }
-      
-      // For demo purposes, accept any combination except empty fields
-      if (email.trim() && password.trim()) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("isAdmin", "false");
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    }, 1000);
-  });
-};
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -54,7 +26,6 @@ const LoginForm = () => {
           description: "Welcome to Legal Vault Search",
         });
         
-        // Redirect based on user role
         if (email === "admin" && password === "admin") {
           navigate("/admin");
         } else {
@@ -83,7 +54,7 @@ const LoginForm = () => {
       <CardHeader>
         <CardTitle className="text-2xl text-center">Login</CardTitle>
         <CardDescription className="text-center">
-          Access your document vault
+          Acesse seu repositório JuriFinder
         </CardDescription>
       </CardHeader>
       <CardContent>

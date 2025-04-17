@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,9 +107,9 @@ const SignupForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Create an Account</CardTitle>
+        <CardTitle className="text-2xl text-center">Criar uma Conta</CardTitle>
         <CardDescription className="text-center">
-          Join Legal Vault Search today
+          Junte-se ao JuriFinder hoje
         </CardDescription>
       </CardHeader>
       <CardContent>

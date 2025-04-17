@@ -81,9 +81,9 @@ const Dashboard = () => {
       
       <main className="flex-1 container mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">Document Dashboard</h1>
+          <h1 className="text-2xl font-bold">Painel de Documentos JuriFinder</h1>
           <p className="text-muted-foreground">
-            Search, view, and manage your legal documents
+            Pesquise, visualize e gerencie seus documentos jurídicos
           </p>
         </div>
 
