@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +74,7 @@ const SignupForm = () => {
       if (isRegistered) {
         toast({
           title: "Registration successful",
-          description: "Welcome to Legal Vault Search",
+          description: "Welcome to JuriFinder",
         });
         
         // Store user in users array

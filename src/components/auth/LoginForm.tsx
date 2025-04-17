@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,25 @@ import { useNavigate } from "react-router-dom";
 const mockAuthenticate = (email: string, password: string): Promise<boolean> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      if ((email === "admin" && password === "admin") || (email.trim() && password.trim())) {
+      // First, check if the user exists in the users array
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const user = users.find((u: {email: string, password: string}) => 
+        u.email === email && u.password === password
+      );
+      
+      if (user) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userEmail", email);
+        
+        if (user.isAdmin) {
+          localStorage.setItem("isAdmin", "true");
+        } else {
+          localStorage.removeItem("isAdmin");
+        }
+        
+        resolve(true);
+      } else if ((email === "admin" && password === "admin") || (email.trim() && password.trim())) {
+        // Fallback for demo purposes
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userEmail", email);
         
@@ -42,7 +61,7 @@ const LoginForm = () => {
       if (isAuthenticated) {
         toast({
           title: "Login successful",
-          description: "Welcome to Legal Vault Search",
+          description: "Welcome to JuriFinder",
         });
         
         if (email === "admin" && password === "admin") {
