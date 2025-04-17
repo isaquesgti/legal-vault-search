@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +19,7 @@ const Index = () => {
       <div className="flex-1 bg-gradient-to-b from-white to-blue-50">
         <div className="container mx-auto px-4 py-16 flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl font-bold text-center text-legal-dark mb-6">
-            Cofre <span className="text-legal-primary">Jurídico</span>
+            Juri<span className="text-legal-primary">Finder</span>
           </h1>
           <p className="text-xl text-center text-gray-600 max-w-2xl mb-10">
             Armazene, organize e pesquise instantaneamente todos os seus documentos jurídicos com recursos inteligentes projetados para profissionais do direito.
@@ -104,11 +103,11 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <p className="text-lg font-bold">Cofre Jurídico</p>
+              <p className="text-lg font-bold">JuriFinder</p>
               <p className="text-gray-400 text-sm">Gerenciamento de documentos seguro para profissionais jurídicos</p>
             </div>
             <div className="text-gray-400 text-sm">
-              &copy; {new Date().getFullYear()} Cofre Jurídico. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} JuriFinder. Todos os direitos reservados.
             </div>
           </div>
         </div>

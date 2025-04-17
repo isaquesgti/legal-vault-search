@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-legal-primary">Cofre Jurídico</span>
+            <span className="text-xl font-bold text-legal-primary">JuriFinder</span>
           </Link>
 
           {/* Mobile menu */}
