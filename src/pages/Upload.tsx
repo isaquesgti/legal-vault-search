@@ -13,15 +13,11 @@ const Upload = () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
   
   const handleUploadComplete = (document: Document) => {
-    // In a real app, the document would be added to the database
-    // and the user would be redirected to the document page or the dashboard
-    
     toast({
       title: "Documento enviado com sucesso!",
-      description: "Você será redirecionado para o dashboard",
+      description: "Você será redirecionado para o painel",
     });
     
-    // For this demo, we'll just redirect to the dashboard
     setTimeout(() => {
       navigate("/dashboard");
     }, 1500);
@@ -44,7 +40,7 @@ const Upload = () => {
             className="mr-4"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span className="sr-only">Voltar para o dashboard</span>
+            <span className="sr-only">Voltar para o painel</span>
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Enviar Documentos</h1>

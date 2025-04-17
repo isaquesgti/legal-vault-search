@@ -11,15 +11,15 @@ const Header = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
-  const userEmail = localStorage.getItem("userEmail") || "user@example.com";
+  const userEmail = localStorage.getItem("userEmail") || "usuario@exemplo.com";
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userEmail");
     
     toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
+      title: "Deslogado",
+      description: "Você foi desconectado com sucesso",
     });
     
     navigate("/login");
@@ -30,7 +30,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-legal-primary">Legal Vault</span>
+            <span className="text-xl font-bold text-legal-primary">Cofre Jurídico</span>
           </Link>
 
           {/* Mobile menu */}
@@ -38,7 +38,7 @@ const Header = () => {
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
+                <span className="sr-only">Alternar menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[250px] sm:w-[300px]">
@@ -47,7 +47,7 @@ const Header = () => {
                   <span className="text-lg font-bold">Menu</span>
                   <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                     <X className="h-5 w-5" />
-                    <span className="sr-only">Close menu</span>
+                    <span className="sr-only">Fechar menu</span>
                   </Button>
                 </div>
                 <nav className="flex flex-col space-y-4">
@@ -56,26 +56,26 @@ const Header = () => {
                     className="px-4 py-2 rounded-md hover:bg-muted"
                     onClick={() => setIsOpen(false)}
                   >
-                    Dashboard
+                    Painel
                   </Link>
                   <Link 
                     to="/upload" 
                     className="px-4 py-2 rounded-md hover:bg-muted"
                     onClick={() => setIsOpen(false)}
                   >
-                    Upload Documents
+                    Enviar Documentos
                   </Link>
                 </nav>
                 <div className="mt-auto pt-4 border-t">
                   <div className="px-4 py-2 text-sm text-muted-foreground">
-                    Signed in as {userEmail}
+                    Logado como {userEmail}
                   </div>
                   <Button
                     variant="destructive"
                     className="w-full mt-2"
                     onClick={handleLogout}
                   >
-                    <LogOut className="h-4 w-4 mr-2" /> Log out
+                    <LogOut className="h-4 w-4 mr-2" /> Sair
                   </Button>
                 </div>
               </div>
@@ -88,13 +88,13 @@ const Header = () => {
               to="/dashboard" 
               className="text-foreground hover:text-legal-primary font-medium"
             >
-              Dashboard
+              Painel
             </Link>
             <Link 
               to="/upload" 
               className="text-foreground hover:text-legal-primary font-medium"
             >
-              Upload Documents
+              Enviar Documentos
             </Link>
           </nav>
 
@@ -109,7 +109,7 @@ const Header = () => {
               </span>
             </div>
             <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" /> Log out
+              <LogOut className="h-4 w-4 mr-2" /> Sair
             </Button>
           </div>
         </div>
