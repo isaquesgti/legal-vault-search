@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 const mockAuthenticate = (email: string, password: string): Promise<boolean> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // First, check if the user exists in the users array
       const users = JSON.parse(localStorage.getItem("users") || "[]");
       const user = users.find((u: {email: string, password: string}) => 
         u.email === email && u.password === password
@@ -28,7 +27,7 @@ const mockAuthenticate = (email: string, password: string): Promise<boolean> => 
         
         resolve(true);
       } else if ((email === "admin" && password === "admin") || (email.trim() && password.trim())) {
-        // Fallback for demo purposes
+        // Fallback demo
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userEmail", email);
         
@@ -60,8 +59,8 @@ const LoginForm = () => {
       
       if (isAuthenticated) {
         toast({
-          title: "Login successful",
-          description: "Welcome to JuriFinder",
+          title: "Login realizado com sucesso",
+          description: "Bem-vindo ao JuriFinder",
         });
         
         if (email === "admin" && password === "admin") {
@@ -71,15 +70,15 @@ const LoginForm = () => {
         }
       } else {
         toast({
-          title: "Login failed",
-          description: "Invalid email or password",
+          title: "Falha no login",
+          description: "Email ou senha inválidos",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Login error",
-        description: "An unexpected error occurred",
+        title: "Erro de login",
+        description: "Ocorreu um erro inesperado",
         variant: "destructive",
       });
     } finally {
@@ -90,10 +89,8 @@ const LoginForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Login</CardTitle>
-        <CardDescription className="text-center">
-          Acesse seu repositório JuriFinder
-        </CardDescription>
+        <CardTitle className="text-2xl text-center">Entrar</CardTitle>
+        {/* Removido CardDescription extra */}
       </CardHeader>
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
@@ -102,7 +99,7 @@ const LoginForm = () => {
             <Input
               id="email"
               type="text"
-              placeholder="Enter your email or username"
+              placeholder="Digite seu email ou usuário"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -110,18 +107,18 @@ const LoginForm = () => {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <a
                 href="#"
                 className="text-sm text-legal-primary hover:text-legal-accent"
               >
-                Forgot password?
+                Esqueceu sua senha?
               </a>
             </div>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -132,13 +129,13 @@ const LoginForm = () => {
             className="w-full bg-legal-primary hover:bg-legal-secondary"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{" "}
+          Ainda não tem uma conta?{" "}
           <a
             href="#"
             onClick={(e) => {
@@ -147,7 +144,7 @@ const LoginForm = () => {
             }}
             className="text-legal-primary hover:text-legal-accent"
           >
-            Create one
+            Crie agora
           </a>
         </p>
       </CardFooter>

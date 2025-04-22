@@ -7,21 +7,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
-// This is a mock registration function. In a real app, this would connect to your backend
+// Agora todo usuário cadastrado será admin
 const mockRegister = (email: string, password: string): Promise<boolean> => {
   return new Promise((resolve) => {
-    // Simulating API call
     setTimeout(() => {
-      // For demo purposes, accept any combination except empty fields
       if (email.trim() && password.trim()) {
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userEmail", email);
-        
-        // Check if user is admin
-        if (email === "admin" && password === "admin") {
-          localStorage.setItem("isAdmin", "true");
-        }
-        
+        localStorage.setItem("isAdmin", "true");
         resolve(true);
       } else {
         resolve(false);
@@ -38,66 +31,53 @@ const SignupForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check for admin user on component mount
   useEffect(() => {
     const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    
-    // If admin user doesn't exist, create it
     if (!existingUsers.some((user: {email: string}) => user.email === "admin")) {
       const adminUser = {
         email: "admin",
         password: "admin",
         isAdmin: true
       };
-      
       localStorage.setItem("users", JSON.stringify([...existingUsers, adminUser]));
     }
   }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (password !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
+        title: "As senhas não coincidem",
+        description: "Por favor, verifique suas senhas.",
         variant: "destructive",
       });
       return;
     }
-    
     setIsLoading(true);
 
     try {
       const isRegistered = await mockRegister(email, password);
-      
       if (isRegistered) {
         toast({
-          title: "Registration successful",
-          description: "Welcome to JuriFinder",
+          title: "Cadastro realizado com sucesso",
+          description: "Bem-vindo ao JuriFinder",
         });
-        
-        // Store user in users array
+        // Todo usuário agora é admin ao se cadastrar
         const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        const newUser = { email, password, isAdmin: email === "admin" && password === "admin" };
+        const newUser = { email, password, isAdmin: true };
         localStorage.setItem("users", JSON.stringify([...existingUsers, newUser]));
-        
-        if (email === "admin" && password === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        navigate("/admin");
       } else {
         toast({
-          title: "Registration failed",
-          description: "Please try again with valid information",
+          title: "Falha no cadastro",
+          description: "Preencha com informações válidas.",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Registration error",
-        description: "An unexpected error occurred",
+        title: "Erro no cadastro",
+        description: "Ocorreu um erro inesperado",
         variant: "destructive",
       });
     } finally {
@@ -108,9 +88,9 @@ const SignupForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Criar uma Conta</CardTitle>
+        <CardTitle className="text-2xl text-center">Criar Conta</CardTitle>
         <CardDescription className="text-center">
-          Junte-se ao JuriFinder hoje
+          Junte-se ao JuriFinder
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,29 +100,29 @@ const SignupForm = () => {
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="Digite seu email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Create a password"
+              placeholder="Crie uma senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Confirmar senha</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder="Confirme sua senha"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -153,13 +133,13 @@ const SignupForm = () => {
             className="w-full bg-legal-primary hover:bg-legal-secondary"
             disabled={isLoading}
           >
-            {isLoading ? "Creating account..." : "Sign Up"}
+            {isLoading ? "Criando conta..." : "Cadastrar"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
+          Já possui uma conta?{" "}
           <a
             href="#"
             onClick={(e) => {
@@ -168,7 +148,7 @@ const SignupForm = () => {
             }}
             className="text-legal-primary hover:text-legal-accent"
           >
-            Login
+            Entrar
           </a>
         </p>
       </CardFooter>
