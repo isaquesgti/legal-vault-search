@@ -8,11 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { UserProfile } from "@/types/auth";
-
-interface ExtendedUserProfile extends UserProfile {
-  email: string;
-}
+import { ExtendedUserProfile } from "@/types/auth";
 
 const UserManagement = () => {
   const [users, setUsers] = useState<ExtendedUserProfile[]>([]);
@@ -61,7 +57,7 @@ const UserManagement = () => {
     }
   };
 
-  const updateUserStatus = async (userId: string, newStatus: string) => {
+  const updateUserStatus = async (userId: string, newStatus: 'pendente' | 'ativo' | 'bloqueado') => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -115,7 +111,9 @@ const UserManagement = () => {
                   <TableCell>
                     <Select
                       value={user.status}
-                      onValueChange={(value) => updateUserStatus(user.id, value)}
+                      onValueChange={(value: 'pendente' | 'ativo' | 'bloqueado') => 
+                        updateUserStatus(user.id, value)
+                      }
                     >
                       <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Selecione o status" />
