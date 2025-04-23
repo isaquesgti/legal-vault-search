@@ -3,45 +3,10 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-
-const mockAuthenticate = (email: string, password: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
-      const user = users.find((u: {email: string, password: string}) => 
-        u.email === email && u.password === password
-      );
-      
-      if (user) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
-        
-        if (user.isAdmin) {
-          localStorage.setItem("isAdmin", "true");
-        } else {
-          localStorage.removeItem("isAdmin");
-        }
-        
-        resolve(true);
-      } else if ((email === "admin" && password === "admin") || (email.trim() && password.trim())) {
-        // Fallback demo
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
-        
-        if (email === "admin" && password === "admin") {
-          localStorage.setItem("isAdmin", "true");
-        }
-        
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    }, 1000);
-  });
-};
+import { supabase } from "@/integrations/supabase/client";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -55,33 +20,39 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      const isAuthenticated = await mockAuthenticate(email, password);
-      
-      if (isAuthenticated) {
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo ao JuriFinder",
-        });
-        
-        if (email === "admin" && password === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
-      } else {
-        toast({
-          title: "Falha no login",
-          description: "Email ou senha inválidos",
-          variant: "destructive",
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // Verificar o status do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile.status !== 'ativo') {
+        await supabase.auth.signOut();
+        throw new Error('Sua conta não está ativa. Entre em contato com o administrador.');
       }
-    } catch (error) {
+
       toast({
-        title: "Erro de login",
-        description: "Ocorreu um erro inesperado",
+        title: "Login realizado com sucesso",
+        description: "Bem-vindo ao JuriFinder",
+      });
+      
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Falha no login",
+        description: error.message,
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -90,7 +61,6 @@ const LoginForm = () => {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl text-center">Entrar</CardTitle>
-        {/* Removido CardDescription extra */}
       </CardHeader>
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
@@ -98,8 +68,8 @@ const LoginForm = () => {
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              type="text"
-              placeholder="Digite seu email ou usuário"
+              type="email"
+              placeholder="Digite seu email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -108,12 +78,13 @@ const LoginForm = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Senha</Label>
-              <a
-                href="#"
+              <Button
+                variant="link"
                 className="text-sm text-legal-primary hover:text-legal-accent"
+                onClick={() => navigate("/reset-password")}
               >
                 Esqueceu sua senha?
-              </a>
+              </Button>
             </div>
             <Input
               id="password"
@@ -136,16 +107,13 @@ const LoginForm = () => {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Ainda não tem uma conta?{" "}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/signup");
-            }}
+          <Button
+            variant="link"
             className="text-legal-primary hover:text-legal-accent"
+            onClick={() => navigate("/signup")}
           >
             Crie agora
-          </a>
+          </Button>
         </p>
       </CardFooter>
     </Card>

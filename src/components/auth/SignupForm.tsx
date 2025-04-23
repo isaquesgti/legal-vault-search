@@ -1,27 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-
-// Agora todo usuário cadastrado será admin
-const mockRegister = (email: string, password: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (email.trim() && password.trim()) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("isAdmin", "true");
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    }, 1000);
-  });
-};
+import { supabase } from "@/integrations/supabase/client";
 
 const SignupForm = () => {
   const [email, setEmail] = useState("");
@@ -31,20 +16,9 @@ const SignupForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    if (!existingUsers.some((user: {email: string}) => user.email === "admin")) {
-      const adminUser = {
-        email: "admin",
-        password: "admin",
-        isAdmin: true
-      };
-      localStorage.setItem("users", JSON.stringify([...existingUsers, adminUser]));
-    }
-  }, []);
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (password !== confirmPassword) {
       toast({
         title: "As senhas não coincidem",
@@ -53,31 +27,27 @@ const SignupForm = () => {
       });
       return;
     }
+
     setIsLoading(true);
 
     try {
-      const isRegistered = await mockRegister(email, password);
-      if (isRegistered) {
-        toast({
-          title: "Cadastro realizado com sucesso",
-          description: "Bem-vindo ao JuriFinder",
-        });
-        // Todo usuário agora é admin ao se cadastrar
-        const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        const newUser = { email, password, isAdmin: true };
-        localStorage.setItem("users", JSON.stringify([...existingUsers, newUser]));
-        navigate("/admin");
-      } else {
-        toast({
-          title: "Falha no cadastro",
-          description: "Preencha com informações válidas.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Cadastro realizado com sucesso",
+        description: "Sua conta foi criada e está pendente de aprovação.",
+      });
+      
+      navigate("/login");
+    } catch (error: any) {
       toast({
         title: "Erro no cadastro",
-        description: "Ocorreu um erro inesperado",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -140,16 +110,13 @@ const SignupForm = () => {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Já possui uma conta?{" "}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/login");
-            }}
+          <Button
+            variant="link"
             className="text-legal-primary hover:text-legal-accent"
+            onClick={() => navigate("/login")}
           >
             Entrar
-          </a>
+          </Button>
         </p>
       </CardFooter>
     </Card>
