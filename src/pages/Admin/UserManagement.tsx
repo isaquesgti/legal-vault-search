@@ -29,7 +29,7 @@ const UserManagement = () => {
     try {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, status, created_at');
+        .select('id, status');
 
       if (profilesError) throw profilesError;
 
@@ -100,7 +100,6 @@ const UserManagement = () => {
               <TableRow>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Data de Cadastro</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -124,9 +123,6 @@ const UserManagement = () => {
                         <SelectItem value="bloqueado">Bloqueado</SelectItem>
                       </SelectContent>
                     </Select>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
                     <Button

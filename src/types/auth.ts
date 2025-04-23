@@ -2,7 +2,6 @@
 export interface UserProfile {
   id: string;
   status: 'pendente' | 'ativo' | 'bloqueado';
-  created_at: string;
 }
 
 export interface UserRole {
