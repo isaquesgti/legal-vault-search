@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -20,22 +21,43 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
+      console.log("Tentando fazer login com:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro de login:", error);
+        throw error;
+      }
 
+      console.log("Login bem-sucedido:", data);
+      
+      if (!data.user) {
+        throw new Error('Nenhum usuário retornado do login');
+      }
+
+      // Verificar status do usuário
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('status')
         .eq('id', data.user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Erro ao buscar perfil:", profileError);
+        throw profileError;
+      }
 
-      if (!profile || profile.status !== 'ativo') {
+      console.log("Perfil do usuário:", profile);
+
+      if (!profile) {
+        throw new Error('Perfil de usuário não encontrado');
+      }
+
+      if (profile.status !== 'ativo') {
+        // Se o usuário não estiver ativo, deslogar e mostrar mensagem
         await supabase.auth.signOut();
         throw new Error('Sua conta não está ativa. Entre em contato com o administrador.');
       }
@@ -47,9 +69,10 @@ const LoginForm = () => {
       
       navigate("/dashboard");
     } catch (error: any) {
+      console.error("Erro completo:", error);
       toast({
         title: "Falha no login",
-        description: error.message,
+        description: error.message || "Ocorreu um erro durante o login",
         variant: "destructive",
       });
     } finally {
@@ -100,7 +123,14 @@ const LoginForm = () => {
             className="w-full bg-legal-primary hover:bg-legal-secondary"
             disabled={isLoading}
           >
-            {isLoading ? "Entrando..." : "Entrar"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Entrando...
+              </>
+            ) : (
+              "Entrar"
+            )}
           </Button>
         </form>
       </CardContent>

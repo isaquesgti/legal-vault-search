@@ -37,55 +37,129 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   const checkUserRole = async (userId: string) => {
-    const { data: role } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .single();
-    
-    setIsAdmin(role?.role === 'admin');
+    try {
+      console.log("Verificando função do usuário:", userId);
+      const { data: role, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Erro ao verificar função:", error);
+        return;
+      }
+      
+      console.log("Função do usuário:", role);
+      setIsAdmin(role?.role === 'admin');
+    } catch (error) {
+      console.error("Erro ao verificar função:", error);
+    }
+  };
+
+  const checkUserStatus = async (userId: string) => {
+    try {
+      console.log("Verificando status do usuário:", userId);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error("Erro ao verificar status:", error);
+        return null;
+      }
+      
+      console.log("Status do usuário:", profile?.status);
+      return profile?.status;
+    } catch (error) {
+      console.error("Erro ao verificar status:", error);
+      return null;
+    }
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    const setupAuth = async () => {
+      console.log("Configurando autenticação...");
+      
+      // Primeiro, configurar o listener para mudanças de estado de autenticação
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log("Evento de autenticação:", event, session?.user?.email);
+          
+          setSession(session);
+          setUser(session?.user ?? null);
 
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('status')
-            .eq('id', session.user.id)
-            .single();
+          if (session?.user) {
+            const status = await checkUserStatus(session.user.id);
+            console.log("Status obtido:", status);
+            
+            if (status !== 'ativo') {
+              console.log("Usuário não está ativo, deslogando...");
+              await supabase.auth.signOut();
+              setSession(null);
+              setUser(null);
+              setUserStatus(null);
+              setIsAdmin(false);
+              
+              if (status) { // Só mostrar mensagem se obtivemos um status válido
+                toast({
+                  title: "Acesso Negado",
+                  description: "Sua conta não está ativa. Entre em contato com o administrador.",
+                  variant: "destructive",
+                });
+              }
+              return;
+            }
+            
+            setUserStatus(status);
+            await checkUserRole(session.user.id);
+          } else {
+            setUserStatus(null);
+            setIsAdmin(false);
+          }
+        }
+      );
 
-          if (!profile || profile.status !== 'ativo') {
-            await supabase.auth.signOut();
+      // Depois, verificar a sessão atual
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Sessão atual:", session?.user?.email);
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const status = await checkUserStatus(session.user.id);
+        console.log("Status inicial:", status);
+        
+        if (status !== 'ativo') {
+          console.log("Usuário não está ativo na verificação inicial, deslogando...");
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          
+          if (status) {
             toast({
               title: "Acesso Negado",
               description: "Sua conta não está ativa. Entre em contato com o administrador.",
               variant: "destructive",
             });
-            return;
           }
-          
-          setUserStatus(profile.status);
-          await checkUserRole(session.user.id);
+          return;
         }
+        
+        setUserStatus(status);
+        await checkUserRole(session.user.id);
       }
-    );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkUserRole(session.user.id);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
+      console.log("Configuração de autenticação concluída");
+      return () => {
+        subscription.unsubscribe();
+      };
     };
+
+    setupAuth();
   }, [toast]);
 
   const signOut = async () => {

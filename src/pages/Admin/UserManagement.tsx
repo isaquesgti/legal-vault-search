@@ -37,15 +37,15 @@ const UserManagement = () => {
       
       if (authError) throw authError;
 
-      const combinedUsers = profiles?.map((profile) => {
+      const combinedUsers: ExtendedUserProfile[] = profiles?.map((profile: any) => {
         const authUser = authUsers.users.find((user) => user.id === profile.id);
         return {
           ...profile,
           email: authUser?.email || "Email não encontrado",
         };
-      });
+      }) || [];
 
-      setUsers(combinedUsers || []);
+      setUsers(combinedUsers);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar usuários",
