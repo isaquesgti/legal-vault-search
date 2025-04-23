@@ -3,11 +3,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { UserProfile, UserRole } from "@/types/auth";
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   userStatus: string | null;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -15,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   userStatus: null,
+  isAdmin: false,
   signOut: async () => {},
 });
 
@@ -30,25 +33,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userStatus, setUserStatus] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
+  const checkUserRole = async (userId: string) => {
+    const { data: role } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+    
+    setIsAdmin(role?.role === 'admin');
+  };
+
   useEffect(() => {
-    // Configurar listener de mudança de estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // Buscar status do usuário
           const { data: profile } = await supabase
             .from('profiles')
             .select('status')
             .eq('id', session.user.id)
             .single();
 
-          if (profile?.status !== 'ativo') {
-            // Se o status não for ativo, fazer logout
+          if (!profile || profile.status !== 'ativo') {
             await supabase.auth.signOut();
             toast({
               title: "Acesso Negado",
@@ -58,15 +69,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
           
-          setUserStatus(profile?.status);
+          setUserStatus(profile.status);
+          await checkUserRole(session.user.id);
         }
       }
     );
 
-    // Verificar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkUserRole(session.user.id);
+      }
     });
 
     return () => {
@@ -79,10 +93,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setSession(null);
     setUser(null);
     setUserStatus(null);
+    setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, userStatus, signOut }}>
+    <AuthContext.Provider value={{ session, user, userStatus, isAdmin, signOut }}>
       {children}
     </AuthContext.Provider>
   );

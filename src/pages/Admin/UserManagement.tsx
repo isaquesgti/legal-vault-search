@@ -7,30 +7,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { UserProfile } from "@/types/auth";
 
-interface UserProfile {
-  id: string;
+interface ExtendedUserProfile extends UserProfile {
   email: string;
-  status: string;
-  created_at: string;
 }
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<ExtendedUserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
+    if (!isAdmin) {
+      navigate("/dashboard");
+      return;
+    }
     fetchUsers();
-  }, []);
+  }, [isAdmin, navigate]);
 
   const fetchUsers = async () => {
     try {
       const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, status, created_at")
-        .order("created_at", { ascending: false });
+        .from('profiles')
+        .select('id, status, created_at');
 
       if (profilesError) throw profilesError;
 
@@ -61,9 +64,9 @@ const UserManagement = () => {
   const updateUserStatus = async (userId: string, newStatus: string) => {
     try {
       const { error } = await supabase
-        .from("profiles")
+        .from('profiles')
         .update({ status: newStatus })
-        .eq("id", userId);
+        .eq('id', userId);
 
       if (error) throw error;
 

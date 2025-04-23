@@ -27,7 +27,6 @@ const LoginForm = () => {
 
       if (error) throw error;
 
-      // Verificar o status do usuário
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('status')
@@ -36,7 +35,7 @@ const LoginForm = () => {
 
       if (profileError) throw profileError;
 
-      if (profile.status !== 'ativo') {
+      if (!profile || profile.status !== 'ativo') {
         await supabase.auth.signOut();
         throw new Error('Sua conta não está ativa. Entre em contato com o administrador.');
       }
@@ -53,6 +52,7 @@ const LoginForm = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
