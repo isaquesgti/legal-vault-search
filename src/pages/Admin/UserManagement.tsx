@@ -33,17 +33,26 @@ const UserManagement = () => {
 
       if (profilesError) throw profilesError;
 
+      // Type assertion to ensure profiles is treated as an array
+      const profilesArray = profiles as Array<{id: string, status: string}>;
+      
+      if (!profilesArray || profilesArray.length === 0) {
+        setUsers([]);
+        setIsLoading(false);
+        return;
+      }
+
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) throw authError;
 
-      const combinedUsers: ExtendedUserProfile[] = profiles?.map((profile: any) => {
-        const authUser = authUsers.users.find((user) => user.id === profile.id);
+      const combinedUsers: ExtendedUserProfile[] = profilesArray.map((profile) => {
+        const authUser = authUsers?.users?.find((user) => user.id === profile.id);
         return {
           ...profile,
           email: authUser?.email || "Email não encontrado",
         };
-      }) || [];
+      });
 
       setUsers(combinedUsers);
     } catch (error: any) {
@@ -104,37 +113,47 @@ const UserManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={user.status}
-                      onValueChange={(value: 'pendente' | 'ativo' | 'bloqueado') => 
-                        updateUserStatus(user.id, value)
-                      }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pendente">Pendente</SelectItem>
-                        <SelectItem value="ativo">Ativo</SelectItem>
-                        <SelectItem value="bloqueado">Bloqueado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/users/${user.id}`)}
-                    >
-                      Ver detalhes
-                    </Button>
-                  </TableCell>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">Carregando usuários...</TableCell>
                 </TableRow>
-              ))}
+              ) : users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">Nenhum usuário encontrado</TableCell>
+                </TableRow>
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.status}
+                        onValueChange={(value: 'pendente' | 'ativo' | 'bloqueado') => 
+                          updateUserStatus(user.id, value)
+                        }
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pendente">Pendente</SelectItem>
+                          <SelectItem value="ativo">Ativo</SelectItem>
+                          <SelectItem value="bloqueado">Bloqueado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/admin/users/${user.id}`)}
+                      >
+                        Ver detalhes
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
