@@ -38,6 +38,23 @@ const LoginForm = () => {
         return;
       }
 
+      // Verificar nos usuários registrados no localStorage
+      const storedUsers = localStorage.getItem("registeredUsers");
+      if (storedUsers) {
+        const users = JSON.parse(storedUsers);
+        const user = users.find((u: any) => u.email === email);
+        
+        if (user) {
+          console.log("Usuário encontrado no localStorage:", user);
+          
+          // Verificar se o status é ativo
+          if (user.status !== 'ativo') {
+            throw new Error('Sua conta está pendente de aprovação pelo administrador.');
+          }
+        }
+      }
+
+      // Tentar login no Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

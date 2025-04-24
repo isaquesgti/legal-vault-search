@@ -18,7 +18,9 @@ const UserDetails = () => {
   const { isAdmin } = useAuth();
 
   useEffect(() => {
-    if (!isAdmin) {
+    // Verifique tanto o isAdmin do AuthProvider quanto o localStorage
+    const localIsAdmin = localStorage.getItem("isAdmin") === "true";
+    if (!isAdmin && !localIsAdmin) {
       navigate("/dashboard");
       return;
     }
@@ -32,7 +34,28 @@ const UserDetails = () => {
     try {
       setIsLoading(true);
       
-      // Get user profile data
+      // Verificar se é admin pelo localStorage (para o admin hardcoded)
+      const localIsAdmin = localStorage.getItem("isAdmin") === "true";
+      
+      if (localIsAdmin) {
+        // Buscar do localStorage se for o admin hardcoded
+        const storedUsers = localStorage.getItem("registeredUsers");
+        if (storedUsers) {
+          const users = JSON.parse(storedUsers);
+          const foundUser = users.find((u: any) => u.id === id);
+          
+          if (foundUser) {
+            setUser({
+              ...foundUser,
+              created_at: foundUser.created_at || new Date().toISOString()
+            });
+          }
+        }
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get user profile data from Supabase
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')

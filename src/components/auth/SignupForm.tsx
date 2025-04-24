@@ -31,16 +31,38 @@ const SignupForm = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Verificar se é o admin hardcoded (mantém para compatibilidade)
+      if (email === "admin" && password === "admin") {
+        toast({
+          title: "Admin já existe",
+          description: "Use 'admin' e 'admin' para fazer login como administrador.",
+        });
+        navigate("/login");
+        return;
+      }
+
+      // Tentar cadastrar no Supabase
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) throw error;
 
+      // Salvar usuário no localStorage também para o admin hardcoded poder gerenciar
+      const storedUsers = localStorage.getItem("registeredUsers") || "[]";
+      const users = JSON.parse(storedUsers);
+      users.push({
+        id: data.user?.id || crypto.randomUUID(),
+        email,
+        status: "pendente",
+        created_at: new Date().toISOString()
+      });
+      localStorage.setItem("registeredUsers", JSON.stringify(users));
+
       toast({
         title: "Cadastro realizado com sucesso",
-        description: "Sua conta foi criada e está pendente de aprovação.",
+        description: "Sua conta foi criada e está pendente de aprovação pelo administrador.",
       });
       
       navigate("/login");

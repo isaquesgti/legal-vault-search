@@ -18,7 +18,9 @@ const UserManagement = () => {
   const { isAdmin } = useAuth();
 
   useEffect(() => {
-    if (!isAdmin) {
+    // Check if admin via localStorage for hardcoded admin or via useAuth for Supabase admin
+    const localIsAdmin = localStorage.getItem("isAdmin") === "true";
+    if (!isAdmin && !localIsAdmin) {
       navigate("/dashboard");
       return;
     }
@@ -27,6 +29,31 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
+      setIsLoading(true);
+      console.log("Buscando usuários...");
+
+      // Para o admin hardcoded, usar usuários do localStorage
+      const localIsAdmin = localStorage.getItem("isAdmin") === "true";
+      if (localIsAdmin) {
+        // Buscar usuários cadastrados no localStorage para o admin hardcoded
+        const storedUsers = localStorage.getItem("registeredUsers");
+        if (storedUsers) {
+          const parsedUsers = JSON.parse(storedUsers);
+          const formattedUsers: ExtendedUserProfile[] = parsedUsers.map((user: any) => ({
+            id: user.id || crypto.randomUUID(),
+            email: user.email,
+            status: user.status || 'pendente'
+          }));
+          setUsers(formattedUsers);
+          console.log("Usuários do localStorage:", formattedUsers);
+        } else {
+          setUsers([]);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Buscar do Supabase se não for o admin hardcoded
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, status');
@@ -56,7 +83,9 @@ const UserManagement = () => {
       });
 
       setUsers(combinedUsers);
+      console.log("Usuários do Supabase:", combinedUsers);
     } catch (error: any) {
+      console.error("Erro ao carregar usuários:", error);
       toast({
         title: "Erro ao carregar usuários",
         description: error.message,
@@ -69,6 +98,31 @@ const UserManagement = () => {
 
   const updateUserStatus = async (userId: string, newStatus: 'pendente' | 'ativo' | 'bloqueado') => {
     try {
+      // Para o admin hardcoded, atualizar no localStorage
+      const localIsAdmin = localStorage.getItem("isAdmin") === "true";
+      if (localIsAdmin) {
+        const storedUsers = localStorage.getItem("registeredUsers");
+        if (storedUsers) {
+          const parsedUsers = JSON.parse(storedUsers);
+          const updatedUsers = parsedUsers.map((user: any) => 
+            user.id === userId ? { ...user, status: newStatus } : user
+          );
+          localStorage.setItem("registeredUsers", JSON.stringify(updatedUsers));
+          
+          // Atualiza o estado local
+          setUsers(users.map(user => 
+            user.id === userId ? { ...user, status: newStatus } : user
+          ));
+          
+          toast({
+            title: "Status atualizado",
+            description: "O status do usuário foi atualizado com sucesso.",
+          });
+        }
+        return;
+      }
+
+      // Atualizar no Supabase
       const { error } = await supabase
         .from('profiles')
         .update({ status: newStatus })
