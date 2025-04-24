@@ -201,7 +201,11 @@ const Admin = () => {
                       <TableRow key={user.id || user.email}>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Badge variant={user.status === 'ativo' ? "success" : user.status === 'pendente' ? "warning" : "destructive"}>
+                          <Badge className={
+                            user.status === 'ativo' ? "bg-green-500 hover:bg-green-600" : 
+                            user.status === 'pendente' ? "bg-yellow-500 hover:bg-yellow-600" : 
+                            "bg-red-500 hover:bg-red-600"
+                          }>
                             {user.status || "Pendente"}
                           </Badge>
                         </TableCell>
