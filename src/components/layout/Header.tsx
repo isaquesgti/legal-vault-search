@@ -1,16 +1,19 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, X } from "lucide-react";
+import { LogOut, User, Menu, X, Users } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-
+  const { isAdmin } = useAuth();
   const userEmail = localStorage.getItem("userEmail") || "usuario@exemplo.com";
+  const localIsAdmin = localStorage.getItem("isAdmin") === "true";
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
@@ -24,11 +27,16 @@ const Header = () => {
     navigate("/login");
   };
 
+  const isUserAdmin = isAdmin || localIsAdmin;
+
   return (
     <header className="bg-white border-b border-border sticky top-0 z-10">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center space-x-2">
+          <Link 
+            to={isUserAdmin ? "/admin" : "/dashboard"} 
+            className="flex items-center space-x-2"
+          >
             <span className="text-xl font-bold text-legal-primary">JuriFinder</span>
           </Link>
 
@@ -51,7 +59,7 @@ const Header = () => {
                 </div>
                 <nav className="flex flex-col space-y-4">
                   <Link 
-                    to="/dashboard" 
+                    to={isUserAdmin ? "/admin" : "/dashboard"}
                     className="px-4 py-2 rounded-md hover:bg-muted"
                     onClick={() => setIsOpen(false)}
                   >
@@ -64,6 +72,15 @@ const Header = () => {
                   >
                     Enviar Documentos
                   </Link>
+                  {isUserAdmin && (
+                    <Link 
+                      to="/admin/users" 
+                      className="px-4 py-2 rounded-md hover:bg-muted"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Gerenciar Usuários
+                    </Link>
+                  )}
                 </nav>
                 <div className="mt-auto pt-4 border-t">
                   <div className="px-4 py-2 text-sm text-muted-foreground">
@@ -84,7 +101,7 @@ const Header = () => {
           {/* Desktop navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link 
-              to="/dashboard" 
+              to={isUserAdmin ? "/admin" : "/dashboard"}
               className="text-foreground hover:text-legal-primary font-medium"
             >
               Painel
@@ -95,6 +112,17 @@ const Header = () => {
             >
               Enviar Documentos
             </Link>
+            {isUserAdmin && (
+              <Link 
+                to="/admin/users" 
+                className="text-foreground hover:text-legal-primary font-medium"
+              >
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  Gerenciar Usuários
+                </Button>
+              </Link>
+            )}
           </nav>
 
           {/* User menu - desktop */}
