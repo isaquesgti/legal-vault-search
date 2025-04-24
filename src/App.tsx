@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Admin from "./pages/Admin";
 import UserManagement from "./pages/Admin/UserManagement";
+import UserDetails from "./pages/Admin/UserDetails";
 import NotFound from "./pages/NotFound";
 import PasswordResetForm from "./components/auth/PasswordResetForm";
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/upload" element={<Upload />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/users/:userId" element={<UserDetails />} />
             <Route path="/reset-password" element={<PasswordResetForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

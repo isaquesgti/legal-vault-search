@@ -33,15 +33,15 @@ const UserManagement = () => {
 
       if (profilesError) throw profilesError;
 
-      // Type assertion to ensure profiles is treated as an array
-      const profilesArray = profiles as Array<{id: string, status: string}>;
-      
-      if (!profilesArray || profilesArray.length === 0) {
+      if (!profiles || profiles.length === 0) {
         setUsers([]);
         setIsLoading(false);
         return;
       }
 
+      // Ensure profiles is treated as an array of objects with id and status properties
+      const profilesArray = profiles as Array<{id: string, status: string}>;
+      
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) throw authError;
@@ -49,7 +49,7 @@ const UserManagement = () => {
       const combinedUsers: ExtendedUserProfile[] = profilesArray.map((profile) => {
         const authUser = authUsers?.users?.find((user) => user.id === profile.id);
         return {
-          ...profile,
+          id: profile.id,
           email: authUser?.email || "Email não encontrado",
           status: profile.status as 'pendente' | 'ativo' | 'bloqueado'
         };
