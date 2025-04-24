@@ -66,8 +66,8 @@ const UserManagement = () => {
         return;
       }
 
-      // Ensure profiles is treated as an array of objects with id and status properties
-      const profilesArray = profiles as Array<{id: string, status: string}>;
+      // Explicitly type the profiles array
+      const profilesArray: Array<{id: string, status: string}> = profiles;
       
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       
