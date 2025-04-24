@@ -22,6 +22,22 @@ const LoginForm = () => {
 
     try {
       console.log("Tentando fazer login com:", email);
+
+      // Hardcoded admin login for testing/development
+      if (email === "admin" && password === "admin") {
+        console.log("Login administrativo especial detectado");
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("isAdmin", "true");
+        
+        toast({
+          title: "Login administrativo realizado",
+          description: "Bem-vindo ao modo administrador",
+        });
+        
+        navigate("/admin");
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -91,7 +107,7 @@ const LoginForm = () => {
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              type="email"
+              type="text"
               placeholder="Digite seu email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

@@ -51,6 +51,7 @@ const UserManagement = () => {
         return {
           ...profile,
           email: authUser?.email || "Email não encontrado",
+          status: profile.status as 'pendente' | 'ativo' | 'bloqueado'
         };
       });
 

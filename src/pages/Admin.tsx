@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -21,6 +20,7 @@ import {
 import { Document } from "@/components/documents/DocumentList";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -29,41 +29,53 @@ const Admin = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
-  // Check if user is authenticated and is admin
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
-    // Load users and documents
-    const loadData = () => {
-      setIsLoading(true);
-      
-      try {
-        // Load users
-        const storedUsers = localStorage.getItem("users");
-        if (storedUsers) {
-          setUsers(JSON.parse(storedUsers));
-        }
-        
-        // Load documents
-        const storedDocuments = localStorage.getItem("documents");
-        if (storedDocuments) {
-          setDocuments(JSON.parse(storedDocuments));
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // If using hardcoded admin login, check localStorage
+    const localIsAdmin = localStorage.getItem("isAdmin") === "true";
     
+    if (!isAdmin && !localIsAdmin) {
+      navigate("/login");
+      return;
+    }
+    
+    // Load users and documents
     loadData();
-  }, [toast]);
+  }, [isAdmin, navigate, toast]);
+
+  const loadData = () => {
+    setIsLoading(true);
+    
+    try {
+      // Load users
+      const storedUsers = localStorage.getItem("users");
+      if (storedUsers) {
+        setUsers(JSON.parse(storedUsers));
+      } else {
+        // If no stored users, create a default admin user
+        const defaultUsers = [
+          { email: "admin", isAdmin: true }
+        ];
+        localStorage.setItem("users", JSON.stringify(defaultUsers));
+        setUsers(defaultUsers);
+      }
+      
+      // Load documents
+      const storedDocuments = localStorage.getItem("documents");
+      if (storedDocuments) {
+        setDocuments(JSON.parse(storedDocuments));
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAddUser = () => {
     navigate("/signup");
@@ -122,10 +134,6 @@ const Admin = () => {
     else return (bytes / 1048576).toFixed(1) + " MB";
   };
 
-  if (!isAuthenticated || !isAdmin) {
-    return <Navigate to="/login" />;
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
@@ -146,14 +154,14 @@ const Admin = () => {
               placeholder="Search users or documents..."
               className="pl-8"
               value={searchTerm}
-              onChange={handleSearch}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="ml-4 flex space-x-2">
-            <Button onClick={handleAddUser}>
-              <Plus className="mr-1 h-4 w-4" /> Add User
+            <Button onClick={() => navigate('/admin/users')}>
+              <Users className="mr-1 h-4 w-4" /> Manage Users
             </Button>
-            <Button onClick={handleUploadDocument}>
+            <Button onClick={() => navigate('/upload')}>
               <Upload className="mr-1 h-4 w-4" /> Upload Document
             </Button>
           </div>
@@ -225,75 +233,10 @@ const Admin = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteUser(user.email)}
-                            disabled={user.isAdmin} // Prevent deleting admin user
+                            onClick={() => navigate('/admin/users')}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            Gerenciar Usuários
                           </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="mr-2 h-5 w-5" /> Documents
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Size</TableHead>
-                    <TableHead>Date Added</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDocuments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        No documents found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredDocuments.map((doc) => (
-                      <TableRow key={doc.id}>
-                        <TableCell>{doc.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {doc.type.charAt(0).toUpperCase() + doc.type.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{doc.clientName}</TableCell>
-                        <TableCell>{formatFileSize(doc.size)}</TableCell>
-                        <TableCell>{formatDate(doc.dateAdded)}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteDocument(doc.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
                         </TableCell>
                       </TableRow>
                     ))
