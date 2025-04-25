@@ -44,7 +44,14 @@ const UserManagement = () => {
       }
 
       console.log("Perfis obtidos:", data);
-      setProfiles(data || []);
+      
+      // Cast the data to ensure it matches the UserProfile type
+      const typedProfiles = data?.map(profile => ({
+        ...profile,
+        status: profile.status as 'pendente' | 'ativo' | 'bloqueado'
+      })) || [];
+      
+      setProfiles(typedProfiles);
     } catch (error: any) {
       console.error("Erro ao buscar perfis:", error);
       toast({
