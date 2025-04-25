@@ -45,6 +45,9 @@ const SignupForm = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin + '/email-verification'
+        }
       });
 
       if (error) throw error;
@@ -62,7 +65,7 @@ const SignupForm = () => {
 
       toast({
         title: "Cadastro realizado com sucesso",
-        description: "Sua conta foi criada e está pendente de aprovação pelo administrador.",
+        description: "Um link de confirmação foi enviado para seu email. Por favor, verifique sua caixa de entrada.",
       });
       
       navigate("/login");

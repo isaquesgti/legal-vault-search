@@ -66,8 +66,8 @@ const UserManagement = () => {
         return;
       }
 
-      // Explicitly type the profiles array
-      const profilesArray: Array<{id: string, status: string}> = profiles;
+      // Type assertion to make TypeScript happy
+      const profilesArray = profiles as Array<{id: string, status: string}>;
       
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       
