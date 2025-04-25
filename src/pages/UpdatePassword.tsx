@@ -1,55 +1,29 @@
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const UpdatePassword = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
-  
-  useEffect(() => {
-    // Check for token in URL
-    const token = searchParams.get("token");
-    if (token) {
-      setHasToken(true);
-    } else {
-      toast({
-        title: "Token não encontrado",
-        description: "Link de redefinição de senha inválido ou expirado.",
-        variant: "destructive"
-      });
-    }
-  }, [searchParams, toast]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast({
-        title: "Senhas não coincidem",
+        title: "As senhas não coincidem",
         description: "Por favor, verifique suas senhas.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Senha muito curta",
-        description: "A senha deve conter pelo menos 6 caracteres.",
         variant: "destructive",
       });
       return;
@@ -58,39 +32,51 @@ const UpdatePassword = () => {
     setIsLoading(true);
 
     try {
+      // Obter token da URL
       const token = searchParams.get("token");
       
       if (!token) {
-        throw new Error("Token de redefinição não encontrado");
+        throw new Error("Token de redefinição de senha não encontrado.");
       }
 
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: "recovery",
-        new_password: password,
-      });
+      // Verificar se o usuário está atualmente logado e tentando mudar sua senha
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      let result;
+      
+      if (session) {
+        // Usuário está logado, use updateUser
+        result = await supabase.auth.updateUser({
+          password: password
+        });
+      } else {
+        // Usuário não está logado, use redefinição de senha com token
+        result = await supabase.auth.resetPasswordForEmail(searchParams.get("email") || "", {
+          redirectTo: `${window.location.origin}/update-password`,
+        });
+      }
 
-      if (error) throw error;
+      if (result.error) {
+        throw result.error;
+      }
 
       toast({
         title: "Senha atualizada",
         description: "Sua senha foi atualizada com sucesso.",
       });
-      
+
       navigate("/login");
     } catch (error: any) {
+      console.error("Erro ao atualizar senha:", error);
       toast({
-        title: "Erro na atualização",
-        description: error.message,
+        title: "Erro ao atualizar senha",
+        description: error.message || "Ocorreu um erro ao atualizar sua senha.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const toggleShowPassword = () => setShowPassword(!showPassword);
-  const toggleShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
@@ -106,105 +92,60 @@ const UpdatePassword = () => {
 
         <Card className="w-full">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">
-              Criar nova senha
-            </CardTitle>
+            <CardTitle className="text-2xl text-center">Atualizar Senha</CardTitle>
           </CardHeader>
-          {!hasToken ? (
-            <CardContent className="pt-4 text-center">
-              <p className="text-gray-700 mb-4">
-                Link inválido ou expirado. Solicite uma nova redefinição de senha.
-              </p>
+          <CardContent>
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Nova Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Digite sua nova senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirme sua nova senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
               <Button
-                onClick={() => navigate("/reset-password")}
-                className="bg-legal-primary hover:bg-legal-secondary"
+                type="submit"
+                className="w-full bg-legal-primary hover:bg-legal-secondary"
+                disabled={isLoading}
               >
-                Solicitar nova redefinição
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Atualizando...
+                  </>
+                ) : (
+                  "Atualizar senha"
+                )}
               </Button>
-            </CardContent>
-          ) : (
-            <>
-              <CardContent>
-                <form onSubmit={handleUpdatePassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Nova senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Digite sua nova senha"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={toggleShowPassword}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirme a nova senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirme sua nova senha"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={toggleShowConfirmPassword}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-legal-primary hover:bg-legal-secondary"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Atualizando...
-                      </>
-                    ) : (
-                      "Atualizar senha"
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-              <CardFooter className="flex justify-center">
-                <Button
-                  variant="link"
-                  onClick={() => navigate("/login")}
-                  className="text-legal-primary hover:text-legal-accent"
-                >
-                  Voltar para o login
-                </Button>
-              </CardFooter>
-            </>
-          )}
+            </form>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <p className="text-sm text-muted-foreground">
+              Lembrou sua senha?{" "}
+              <Button
+                variant="link"
+                className="text-legal-primary hover:text-legal-accent"
+                onClick={() => navigate("/login")}
+              >
+                Voltar para o login
+              </Button>
+            </p>
+          </CardFooter>
         </Card>
       </div>
     </div>

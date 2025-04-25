@@ -38,22 +38,6 @@ const LoginForm = () => {
         return;
       }
 
-      // Verificar nos usuários registrados no localStorage
-      const storedUsers = localStorage.getItem("registeredUsers");
-      if (storedUsers) {
-        const users = JSON.parse(storedUsers);
-        const user = users.find((u: any) => u.email === email);
-        
-        if (user) {
-          console.log("Usuário encontrado no localStorage:", user);
-          
-          // Verificar se o status é ativo
-          if (user.status !== 'ativo') {
-            throw new Error('Sua conta está pendente de aprovação pelo administrador.');
-          }
-        }
-      }
-
       // Tentar login no Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -72,24 +56,36 @@ const LoginForm = () => {
       }
 
       // Verificar status do usuário
-      const { data: profile, error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('status')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle(); // Usando maybeSingle em vez de single para evitar o erro
 
       if (profileError) {
         console.error("Erro ao buscar perfil:", profileError);
         throw profileError;
       }
 
-      console.log("Perfil do usuário:", profile);
+      console.log("Perfil do usuário:", profileData);
 
-      if (!profile) {
-        throw new Error('Perfil de usuário não encontrado');
+      if (!profileData) {
+        // Se o perfil não existir, criar um perfil novo com status pendente
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ id: data.user.id, status: 'pendente' });
+        
+        if (insertError) {
+          console.error("Erro ao criar perfil:", insertError);
+          // Continuar mesmo com erro, mas logar o usuário
+        }
+        
+        // Deslogar o usuário pois o perfil está pendente
+        await supabase.auth.signOut();
+        throw new Error('Sua conta está pendente de aprovação pelo administrador.');
       }
 
-      if (profile.status !== 'ativo') {
+      if (profileData.status !== 'ativo') {
         // Se o usuário não estiver ativo, deslogar e mostrar mensagem
         await supabase.auth.signOut();
         throw new Error('Sua conta não está ativa. Entre em contato com o administrador.');

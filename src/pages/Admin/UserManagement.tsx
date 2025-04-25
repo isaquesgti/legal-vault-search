@@ -1,219 +1,137 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Header from "@/components/layout/Header";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { ExtendedUserProfile } from "@/types/auth";
+import { Search } from "lucide-react";
+import { UserProfile } from "@/types/auth";
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<ExtendedUserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check if admin via localStorage for hardcoded admin or via useAuth for Supabase admin
-    const localIsAdmin = localStorage.getItem("isAdmin") === "true";
-    if (!isAdmin && !localIsAdmin) {
-      navigate("/dashboard");
-      return;
-    }
-    fetchUsers();
-  }, [isAdmin, navigate]);
+    fetchProfiles();
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchProfiles = async () => {
     try {
-      setIsLoading(true);
-      console.log("Buscando usuários...");
-
-      // Para o admin hardcoded, usar usuários do localStorage
-      const localIsAdmin = localStorage.getItem("isAdmin") === "true";
-      if (localIsAdmin) {
-        // Buscar usuários cadastrados no localStorage para o admin hardcoded
-        const storedUsers = localStorage.getItem("registeredUsers");
-        if (storedUsers) {
-          const parsedUsers = JSON.parse(storedUsers);
-          const formattedUsers: ExtendedUserProfile[] = parsedUsers.map((user: any) => ({
-            id: user.id || crypto.randomUUID(),
-            email: user.email,
-            status: user.status || 'pendente'
-          }));
-          setUsers(formattedUsers);
-          console.log("Usuários do localStorage:", formattedUsers);
-        } else {
-          setUsers([]);
-        }
-        setIsLoading(false);
+      // Verificar admin no localStorage (para desenvolvimento)
+      const isAdmin = localStorage.getItem("isAdmin");
+      if (!isAdmin) {
+        toast({
+          title: "Acesso negado",
+          description: "Você não tem permissão para acessar esta página.",
+          variant: "destructive"
+        });
+        navigate("/login");
         return;
       }
 
-      // Buscar do Supabase se não for o admin hardcoded
-      const { data: profiles, error: profilesError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('id, status');
-
-      if (profilesError) throw profilesError;
-
-      if (!profiles || profiles.length === 0) {
-        setUsers([]);
-        setIsLoading(false);
-        return;
+        .select('*');
+        
+      if (error) {
+        throw error;
       }
 
-      // Type assertion to make TypeScript happy
-      const profilesArray = profiles as Array<{id: string, status: string}>;
-      
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) throw authError;
-
-      const combinedUsers: ExtendedUserProfile[] = profilesArray.map((profile) => {
-        const authUser = authUsers?.users?.find((user) => user.id === profile.id);
-        return {
-          id: profile.id,
-          email: authUser?.email || "Email não encontrado",
-          status: profile.status as 'pendente' | 'ativo' | 'bloqueado'
-        };
-      });
-
-      setUsers(combinedUsers);
-      console.log("Usuários do Supabase:", combinedUsers);
+      console.log("Perfis obtidos:", data);
+      setProfiles(data || []);
     } catch (error: any) {
-      console.error("Erro ao carregar usuários:", error);
+      console.error("Erro ao buscar perfis:", error);
       toast({
-        title: "Erro ao carregar usuários",
+        title: "Erro ao buscar usuários",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const updateUserStatus = async (userId: string, newStatus: 'pendente' | 'ativo' | 'bloqueado') => {
-    try {
-      // Para o admin hardcoded, atualizar no localStorage
-      const localIsAdmin = localStorage.getItem("isAdmin") === "true";
-      if (localIsAdmin) {
-        const storedUsers = localStorage.getItem("registeredUsers");
-        if (storedUsers) {
-          const parsedUsers = JSON.parse(storedUsers);
-          const updatedUsers = parsedUsers.map((user: any) => 
-            user.id === userId ? { ...user, status: newStatus } : user
-          );
-          localStorage.setItem("registeredUsers", JSON.stringify(updatedUsers));
-          
-          // Atualiza o estado local
-          setUsers(users.map(user => 
-            user.id === userId ? { ...user, status: newStatus } : user
-          ));
-          
-          toast({
-            title: "Status atualizado",
-            description: "O status do usuário foi atualizado com sucesso.",
-          });
-        }
-        return;
-      }
+  const handleViewUser = (userId: string) => {
+    navigate(`/admin/users/${userId}`);
+  };
 
-      // Atualizar no Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: newStatus })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, status: newStatus } : user
-      ));
-
-      toast({
-        title: "Status atualizado",
-        description: "O status do usuário foi atualizado com sucesso.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar status",
-        description: error.message,
-        variant: "destructive",
-      });
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ativo":
+        return "bg-green-500 text-white";
+      case "pendente":
+        return "bg-yellow-500 text-white";
+      case "bloqueado":
+        return "bg-red-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
     }
   };
+
+  const filteredProfiles = searchTerm 
+    ? profiles.filter(profile => 
+        profile.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.status?.toLowerCase().includes(searchTerm.toLowerCase()))
+    : profiles;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
-          <p className="text-muted-foreground">
-            Gerencie os status dos usuários da plataforma
-          </p>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Gerenciamento de Usuários</CardTitle>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar usuários..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-
-        <div className="bg-white rounded-lg shadow">
-          <Table>
-            <TableHeader>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredProfiles.length > 0 ? (
+              filteredProfiles.map((profile) => (
+                <TableRow key={profile.id}>
+                  <TableCell className="font-medium">{profile.id}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(profile.status || "")}>
+                      {profile.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleViewUser(profile.id || "")}
+                    >
+                      Ver detalhes
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableCell colSpan={3} className="text-center py-4">
+                  Nenhum usuário encontrado
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center">Carregando usuários...</TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center">Nenhum usuário encontrado</TableCell>
-                </TableRow>
-              ) : (
-                users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={user.status}
-                        onValueChange={(value: 'pendente' | 'ativo' | 'bloqueado') => 
-                          updateUserStatus(user.id, value)
-                        }
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pendente">Pendente</SelectItem>
-                          <SelectItem value="ativo">Ativo</SelectItem>
-                          <SelectItem value="bloqueado">Bloqueado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/admin/users/${user.id}`)}
-                      >
-                        Ver detalhes
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </main>
-    </div>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 };
 

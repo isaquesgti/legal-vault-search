@@ -17,7 +17,7 @@ import Admin from "./pages/Admin";
 import UserManagement from "./pages/Admin/UserManagement";
 import UserDetails from "./pages/Admin/UserDetails";
 import NotFound from "./pages/NotFound";
-import PasswordResetForm from "./components/auth/PasswordResetForm";
+import PasswordReset from "./pages/PasswordReset";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +33,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/email-verification" element={<EmailVerification />} />
-            <Route path="/reset-password" element={<PasswordResetForm />} />
+            <Route path="/reset-password" element={<PasswordReset />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/update-email" element={<UpdateEmail />} />
             <Route path="/dashboard" element={<Dashboard />} />
